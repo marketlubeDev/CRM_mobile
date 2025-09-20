@@ -1,96 +1,177 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Alert,
+  Linking,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { colors } from "../../constants/colors";
+import { Swipeable } from "react-native-gesture-handler";
 import { useNavigation } from "@react-navigation/native";
+import { colors } from "../../constants/colors";
 
-let dummyImageUrl =
+const dummyImageUrl =
   "https://static.vecteezy.com/system/resources/thumbnails/036/594/092/small/man-empty-avatar-photo-placeholder-for-social-networks-resumes-forums-and-dating-sites-male-and-female-no-photo-images-for-unfilled-user-profile-free-vector.jpg";
 
 const LeadCard = ({ Lead }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigation = useNavigation();
-  const toggleExpanded = (event) => {
-    event.stopPropagation(); // Prevent card press when toggling
-    setIsExpanded(!isExpanded);
+  const swipeableRef = React.useRef(null);
+
+  // === Swipe actions ===
+  const handleSwipeLeft = () => {
+    const phoneNumber = "+918714441727";
+    const url = `whatsapp://send?phone=${phoneNumber}`;
+    Linking.openURL(url).catch(() =>
+      Alert.alert("Error", "Could not open WhatsApp")
+    );
+    // Close the swipe after action
+    setTimeout(() => {
+      swipeableRef.current?.close();
+    }, 100);
   };
 
+  const handleSwipeRight = () => {
+    const phoneNumber = "8714441727";
+    const url = `tel:${phoneNumber}`;
+    Linking.openURL(url).catch(() =>
+      Alert.alert("Error", "Could not make phone call")
+    );
+    // Close the swipe after action
+    setTimeout(() => {
+      swipeableRef.current?.close();
+    }, 100);
+  };
+
+  // === Tap on card ===
   const handleCardPress = () => {
     navigation.navigate("LeadDetails", { lead: Lead });
   };
 
+  const toggleExpanded = (e) => {
+    e.stopPropagation();
+    setIsExpanded((prev) => !prev);
+  };
+
+  // Optional swipe indicators (optional UI)
+  const renderRightActions = () => (
+    <View style={styles.rightSwipeContainer}>
+      <View style={styles.swipeContent}>
+        <View style={styles.swipeIconWrapper}>
+          <Ionicons name="logo-whatsapp" size={24} color="#fff" />
+        </View>
+        <View style={styles.swipeTextContainer}>
+          <Text style={styles.swipeTitle}>WhatsApp</Text>
+          <Text style={styles.swipeSubtitle}>Send Message</Text>
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderLeftActions = () => (
+    <View style={styles.leftSwipeContainer}>
+      <View style={styles.swipeContent}>
+        <View style={styles.swipeIconWrapper}>
+          <Ionicons name="call" size={24} color="#fff" />
+        </View>
+        <View style={styles.swipeTextContainer}>
+          <Text style={styles.swipeTitle}>Call</Text>
+          <Text style={styles.swipeSubtitle}>8714441727</Text>
+        </View>
+      </View>
+    </View>
+  );
+
   return (
-    <TouchableOpacity style={styles.cardContainer} onPress={handleCardPress}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.avatar}>
-          <Image
-            source={{ uri: Lead?.img || dummyImageUrl }}
-            style={styles.avatarImage}
-          />
-        </View>
-
-        <View style={styles.info}>
-          <Text style={styles.name}>{Lead?.name || "N/A"}</Text>
-          <Text style={styles.company}>{Lead?.branch}</Text>
-        </View>
-
-        {/* <View style={styles.statusBadge}>
-          <Text style={styles.statusText}>{Lead?.countryCode || "N/A"}</Text>
-        </View> */}
-      </View>
-
-      {/* Actions Row */}
-      <View style={styles.actionsRow}>
-        <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="flag" size={12} color={colors.primary} />
-          <Text style={styles.actionText}>{Lead?.status || "N/A"}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="flag-outline" size={12} color={colors.primary} />
-          <Text style={styles.actionText}>{Lead?.country || "N/A"}</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Details - Collapsible */}
-      {isExpanded && (
-        <View style={styles.details}>
-          <View style={styles.detailRow}>
-            <Ionicons name="call-outline" size={16} color={colors.success} />
-            <Text style={styles.detailText}>{Lead?.phone || "N/A"}</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Ionicons name="mail-outline" size={16} color={colors.primary} />
-            <Text style={styles.detailText}>{Lead?.email || "N/A"}</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Ionicons
-              name="chatbox-ellipses-outline"
-              size={16}
-              color={colors.warning}
+    <Swipeable
+      ref={swipeableRef}
+      renderLeftActions={renderLeftActions}
+      onSwipeableLeftOpen={handleSwipeRight}
+      renderRightActions={renderRightActions}
+      onSwipeableRightOpen={handleSwipeLeft}
+      rightThreshold={40}
+      leftThreshold={40}
+    >
+      <TouchableOpacity
+        activeOpacity={0.8}
+        style={styles.cardContainer}
+        onPress={handleCardPress}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.avatar}>
+            <Image
+              source={{ uri: Lead?.img || dummyImageUrl }}
+              style={styles.avatarImage}
             />
-            <Text style={styles.detailText}>{Lead?.leadSource || "N/A"}</Text>
           </View>
-          <View style={styles.detailRow}>
-            <Ionicons name="globe-outline" size={16} color={colors.secondary} />
-            <Text style={styles.detailText}>{Lead?.followupDate || "N/A"}</Text>
+
+          <View style={styles.info}>
+            <Text style={styles.name}>{Lead?.name || "N/A"}</Text>
+            <Text style={styles.company}>{Lead?.branch || "N/A"}</Text>
           </View>
         </View>
-      )}
 
-      {/* Footer - Clickable Toggle */}
-      <TouchableOpacity style={styles.footer} onPress={toggleExpanded}>
-        <Text style={styles.footerText}>
-          Added on {Lead?.createdAt || "N/A"}
-        </Text>
-        <Ionicons
-          name={isExpanded ? "chevron-up" : "chevron-down"}
-          size={16}
-          color={colors.iconLight}
-        />
+        {/* Actions Row */}
+        <View style={styles.actionsRow}>
+          <View style={styles.actionButton}>
+            <Ionicons name="flag" size={12} color={colors.primary} />
+            <Text style={styles.actionText}>{Lead?.status || "N/A"}</Text>
+          </View>
+          <View style={styles.actionButton}>
+            <Ionicons name="flag-outline" size={12} color={colors.primary} />
+            <Text style={styles.actionText}>{Lead?.country || "N/A"}</Text>
+          </View>
+        </View>
+
+        {/* Details */}
+        {isExpanded && (
+          <View style={styles.details}>
+            <View style={styles.detailRow}>
+              <Ionicons name="call-outline" size={16} color={colors.success} />
+              <Text style={styles.detailText}>{Lead?.phone || "N/A"}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Ionicons name="mail-outline" size={16} color={colors.primary} />
+              <Text style={styles.detailText}>{Lead?.email || "N/A"}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Ionicons
+                name="chatbox-ellipses-outline"
+                size={16}
+                color={colors.warning}
+              />
+              <Text style={styles.detailText}>{Lead?.leadSource || "N/A"}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Ionicons
+                name="globe-outline"
+                size={16}
+                color={colors.secondary}
+              />
+              <Text style={styles.detailText}>
+                {Lead?.followupDate || "N/A"}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Footer */}
+        <TouchableOpacity style={styles.footer} onPress={toggleExpanded}>
+          <Text style={styles.footerText}>
+            Added on {Lead?.createdAt || "N/A"}
+          </Text>
+          <Ionicons
+            name={isExpanded ? "chevron-up" : "chevron-down"}
+            size={16}
+            color={colors.iconLight}
+          />
+        </TouchableOpacity>
       </TouchableOpacity>
-    </TouchableOpacity>
+    </Swipeable>
   );
 };
 
@@ -136,17 +217,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.secondaryText,
     marginTop: 2,
-  },
-  statusBadge: {
-    backgroundColor: colors.overlay,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 20,
-  },
-  statusText: {
-    fontSize: 10,
-    color: colors.whiteText,
-    fontWeight: "600",
   },
   actionsRow: {
     flexDirection: "row",
@@ -194,6 +264,61 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 12,
     color: colors.lightText,
+  },
+  rightSwipeContainer: {
+    backgroundColor: "#25D366",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 120,
+    borderRadius: 16,
+    marginBottom: 16,
+    shadowColor: colors.shadow,
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  leftSwipeContainer: {
+    backgroundColor: "#007AFF",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 120,
+    borderRadius: 16,
+    marginBottom: 16,
+    shadowColor: colors.shadow,
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  swipeContent: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 16,
+  },
+  swipeIconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  swipeTextContainer: {
+    alignItems: "center",
+  },
+  swipeTitle: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 14,
+    marginBottom: 2,
+  },
+  swipeSubtitle: {
+    color: "rgba(255, 255, 255, 0.8)",
+    fontWeight: "500",
+    fontSize: 11,
+    textAlign: "center",
   },
 });
 
