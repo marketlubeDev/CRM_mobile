@@ -24,15 +24,7 @@ export default function LeadsStack() {
         component={LeadsMain}
         options={{
           title: "Leads",
-          headerShown: false, // Hide header since drawer already has one
-        }}
-      />
-      <Stack.Screen
-        name="LeadDetails"
-        component={LeadDetails}
-        options={{
-          title: "Lead Details",
-          headerShown: true, // Show header for details screen
+          headerShown: false, // Hide stack header - drawer will show "Leads"
         }}
       />
     </Stack.Navigator>
