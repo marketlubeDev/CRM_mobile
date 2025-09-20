@@ -4,198 +4,196 @@ import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
   ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../constants/colors";
+import Selector from "../../components/Common/Selector";
+import { filterOptions } from "../../constants/dropdownData";
 
-// Import dummy data (you might want to move this to a separate data file)
-const dummyLeads = [
-  {
-    _id: "68cd1beb2777fbc3ccc4f608",
-    leadSource: "WhatsApp",
-    name: "Aswin",
-    email: "",
-    phone: "8606785438",
-    district: "Kozhikode",
-    status: "University Student",
-    country: "India",
-  },
-  {
-    _id: "68cd1bdb2777fbc3ccc39a75",
-    leadSource: "Meta",
-    name: "Athirasurendranath",
-    email: "athirasnath0411@gmail.com",
-    phone: "9656624929",
-    district: "N/A",
-    status: "University Student",
-    country: "India",
-  },
-  // Add more dummy data as needed
-];
-
-export default function Filters() {
-  const [searchQuery, setSearchQuery] = useState("");
+export default function Filters({ onClose }) {
   const [selectedFilters, setSelectedFilters] = useState({
-    status: null,
-    source: null,
-    country: null,
+    branch: "all",
+    status: "all",
+    subStatus: "all",
+    country: "all",
+    form: "all",
+    source: "all",
+    role: "all",
+    user: "all",
   });
 
-  const handleFilterSelect = (filterType, value) => {
+  const [openDropdown, setOpenDropdown] = useState(null);
+
+  // Generic handler for all selector components
+  const createFilterHandler = (filterType) => (value) => {
     setSelectedFilters((prev) => ({
       ...prev,
-      [filterType]: prev[filterType] === value ? null : value,
+      [filterType]: value,
     }));
+  };
+
+  // Handle dropdown open/close to ensure only one is open at a time
+  const handleDropdownOpen = (filterType, isOpen) => {
+    if (isOpen) {
+      setOpenDropdown(filterType);
+    } else if (openDropdown === filterType) {
+      setOpenDropdown(null);
+    }
+  };
+
+  // Function to get dynamic z-index based on which dropdown is open
+  const getZIndex = (filterType) => {
+    if (openDropdown === filterType) {
+      return 10000; // Active dropdown gets highest z-index
+    }
+    return 1000; // All other dropdowns get lower z-index
   };
 
   const clearAllFilters = () => {
     setSelectedFilters({
-      status: null,
-      source: null,
-      country: null,
+      branch: "all",
+      status: "all",
+      subStatus: "all",
+      country: "all",
+      form: "all",
+      source: "all",
+      role: "all",
+      user: "all",
     });
-    setSearchQuery("");
+    setOpenDropdown(null); // Close any open dropdown
   };
 
-  const getFilterCount = (filterType, value) => {
-    if (filterType === "status" && value === "All") {
-      return dummyLeads.length;
+  const applyFilters = () => {
+    // Handle apply filters logic here
+    console.log("Applied Filters:", selectedFilters);
+
+    // Close the modal after applying filters
+    if (onClose) {
+      onClose();
     }
-    return dummyLeads.filter((lead) => {
-      switch (filterType) {
-        case "status":
-          return lead.status === value;
-        case "source":
-          return lead.leadSource === value;
-        case "country":
-          return lead.country === value;
-        default:
-          return false;
-      }
-    }).length;
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Filter Options</Text>
+    <ScrollView style={styles.container} alwaysBounceVertical={false}>
+      {/* <Text style={styles.title}>Filter Options</Text> */}
 
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color={colors.iconLight} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search leads..."
-          placeholderTextColor={colors.placeholderText}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
+      {/* Filter Grid - 2 columns */}
+      <View style={styles.filterGrid}>
+        <View style={styles.filterColumn}>
+          <Selector
+            options={filterOptions.branch}
+            selectedValue={selectedFilters.branch}
+            onValueChange={createFilterHandler("branch")}
+            placeholder="Select Branch"
+            label="Branch"
+            searchable={true}
+            open={openDropdown === "branch"}
+            onOpen={(isOpen) => handleDropdownOpen("branch", isOpen)}
+            zIndex={getZIndex("branch")}
+            zIndexInverse={1000}
+          />
+          <Selector
+            options={filterOptions.subStatus}
+            selectedValue={selectedFilters.subStatus}
+            onValueChange={createFilterHandler("subStatus")}
+            placeholder="Select Sub Status"
+            label="Sub Status"
+            searchable={true}
+            open={openDropdown === "subStatus"}
+            onOpen={(isOpen) => handleDropdownOpen("subStatus", isOpen)}
+            zIndex={getZIndex("subStatus")}
+            zIndexInverse={1000}
+          />
+          <Selector
+            options={filterOptions.form}
+            selectedValue={selectedFilters.form}
+            onValueChange={createFilterHandler("form")}
+            placeholder="Select Form"
+            label="Form"
+            searchable={true}
+            open={openDropdown === "form"}
+            onOpen={(isOpen) => handleDropdownOpen("form", isOpen)}
+            zIndex={getZIndex("form")}
+            zIndexInverse={1000}
+          />
+          <Selector
+            options={filterOptions.role}
+            selectedValue={selectedFilters.role}
+            onValueChange={createFilterHandler("role")}
+            placeholder="Select Role"
+            label="Role"
+            searchable={true}
+            open={openDropdown === "role"}
+            onOpen={(isOpen) => handleDropdownOpen("role", isOpen)}
+            zIndex={getZIndex("role")}
+            zIndexInverse={1000}
+          />
+        </View>
+
+        <View style={styles.filterColumn}>
+          <Selector
+            options={filterOptions.status}
+            selectedValue={selectedFilters.status}
+            onValueChange={createFilterHandler("status")}
+            placeholder="Select Status"
+            label="Status"
+            searchable={true}
+            open={openDropdown === "status"}
+            onOpen={(isOpen) => handleDropdownOpen("status", isOpen)}
+            zIndex={getZIndex("status")}
+            zIndexInverse={1000}
+          />
+          <Selector
+            options={filterOptions.country}
+            selectedValue={selectedFilters.country}
+            onValueChange={createFilterHandler("country")}
+            placeholder="Select Country"
+            label="Country"
+            searchable={true}
+            open={openDropdown === "country"}
+            onOpen={(isOpen) => handleDropdownOpen("country", isOpen)}
+            zIndex={getZIndex("country")}
+            zIndexInverse={1000}
+          />
+          <Selector
+            options={filterOptions.source}
+            selectedValue={selectedFilters.source}
+            onValueChange={createFilterHandler("source")}
+            placeholder="Select Source"
+            label="Source"
+            searchable={true}
+            open={openDropdown === "source"}
+            onOpen={(isOpen) => handleDropdownOpen("source", isOpen)}
+            zIndex={getZIndex("source")}
+            zIndexInverse={1000}
+          />
+          <Selector
+            options={filterOptions.user}
+            selectedValue={selectedFilters.user}
+            onValueChange={createFilterHandler("user")}
+            placeholder="Select User"
+            label="User"
+            searchable={true}
+            open={openDropdown === "user"}
+            onOpen={(isOpen) => handleDropdownOpen("user", isOpen)}
+            zIndex={getZIndex("user")}
+            zIndexInverse={1000}
+          />
+        </View>
       </View>
 
-      {/* Clear Filters Button */}
-      <TouchableOpacity style={styles.clearButton} onPress={clearAllFilters}>
-        <Ionicons name="refresh" size={16} color={colors.primary} />
-        <Text style={styles.clearButtonText}>Clear All Filters</Text>
-      </TouchableOpacity>
+      {/* Action Buttons */}
+      <View style={styles.actionButtons}>
+        <TouchableOpacity style={styles.clearButton} onPress={clearAllFilters}>
+          <Ionicons name="refresh" size={16} color={colors.primary} />
+          <Text style={styles.clearButtonText}>Clear All</Text>
+        </TouchableOpacity>
 
-      {/* Status Filters */}
-      <View style={styles.filterSection}>
-        <Text style={styles.filterSectionTitle}>Status</Text>
-        {["All", "New Lead", "University Student", "Converted"].map(
-          (status) => (
-            <TouchableOpacity
-              key={status}
-              style={[
-                styles.filterOption,
-                selectedFilters.status === status &&
-                  styles.selectedFilterOption,
-              ]}
-              onPress={() => handleFilterSelect("status", status)}
-            >
-              <Text
-                style={[
-                  styles.filterOptionText,
-                  selectedFilters.status === status &&
-                    styles.selectedFilterText,
-                ]}
-              >
-                {status}
-              </Text>
-              <View style={styles.filterCount}>
-                <Text style={styles.filterCountText}>
-                  {getFilterCount("status", status)}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          )
-        )}
+        <TouchableOpacity style={styles.applyButton} onPress={applyFilters}>
+          <Text style={styles.applyButtonText}>Apply Filters</Text>
+        </TouchableOpacity>
       </View>
-
-      {/* Source Filters */}
-      <View style={styles.filterSection}>
-        <Text style={styles.filterSectionTitle}>Lead Source</Text>
-        {["WhatsApp", "Meta", "Website", "Referral"].map((source) => (
-          <TouchableOpacity
-            key={source}
-            style={[
-              styles.filterOption,
-              selectedFilters.source === source && styles.selectedFilterOption,
-            ]}
-            onPress={() => handleFilterSelect("source", source)}
-          >
-            <Text
-              style={[
-                styles.filterOptionText,
-                selectedFilters.source === source && styles.selectedFilterText,
-              ]}
-            >
-              {source}
-            </Text>
-            <View style={styles.filterCount}>
-              <Text style={styles.filterCountText}>
-                {getFilterCount("source", source)}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Country Filters */}
-      <View style={styles.filterSection}>
-        <Text style={styles.filterSectionTitle}>Country</Text>
-        {["India", "UAE", "Canada", "Australia"].map((country) => (
-          <TouchableOpacity
-            key={country}
-            style={[
-              styles.filterOption,
-              selectedFilters.country === country &&
-                styles.selectedFilterOption,
-            ]}
-            onPress={() => handleFilterSelect("country", country)}
-          >
-            <Text
-              style={[
-                styles.filterOptionText,
-                selectedFilters.country === country &&
-                  styles.selectedFilterText,
-              ]}
-            >
-              {country}
-            </Text>
-            <View style={styles.filterCount}>
-              <Text style={styles.filterCountText}>
-                {getFilterCount("country", country)}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Apply Filters Button */}
-      <TouchableOpacity style={styles.applyButton}>
-        <Text style={styles.applyButtonText}>Apply Filters</Text>
-      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -204,36 +202,35 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    padding: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: colors.primaryText,
-    marginBottom: 20,
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.cardBackground,
-    borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
+    paddingTop: 8,
+    paddingBottom: 16,
   },
-  searchInput: {
+  filterGrid: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 30,
+  },
+  filterColumn: {
     flex: 1,
-    marginLeft: 12,
-    fontSize: 16,
-    color: colors.primaryText,
+    marginHorizontal: 4,
+  },
+  actionButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 20,
+    marginBottom: 40,
   },
   clearButton: {
     flexDirection: "row",
     alignItems: "center",
-    alignSelf: "flex-end",
-    marginBottom: 16,
+    backgroundColor: colors.cardBackground,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.primary,
   },
   clearButtonText: {
     color: colors.primary,
@@ -241,61 +238,15 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontWeight: "600",
   },
-  filterSection: {
-    backgroundColor: colors.cardBackground,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  filterSectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: colors.primaryText,
-    marginBottom: 12,
-  },
-  filterOption: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  selectedFilterOption: {
-    backgroundColor: colors.navActive,
-    marginHorizontal: -16,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  filterOptionText: {
-    fontSize: 16,
-    color: colors.primaryText,
-  },
-  selectedFilterText: {
-    color: colors.primary,
-    fontWeight: "600",
-  },
-  filterCount: {
-    backgroundColor: colors.navActive,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  filterCountText: {
-    fontSize: 12,
-    color: colors.primary,
-    fontWeight: "600",
-  },
   applyButton: {
     backgroundColor: colors.primary,
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 32,
     alignItems: "center",
-    marginTop: 20,
-    marginBottom: 40,
   },
   applyButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600",
     color: colors.whiteText,
   },

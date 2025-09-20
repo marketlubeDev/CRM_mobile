@@ -30,6 +30,10 @@ export const colors = {
   inputFocus: "#0B6ECA",
   placeholderText: "rgba(0, 0, 0, 0.5)",
 
+  // Dropdown Colors
+  dropdownBackground: "#FAFAFA",
+  dropdownContainerBackground: "#FFFFFF",
+
   // Button Colors
   buttonPrimary: "#0B6ECA",
   buttonSecondary: "#5856D6",

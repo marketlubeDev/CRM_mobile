@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { StyleSheet, View, TouchableOpacity, Text } from "react-native";
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Text,
+  Modal,
+  SafeAreaView,
+  Platform,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../constants/colors";
 
@@ -11,20 +19,38 @@ import AddLead from "./AddLead";
 
 export default function LeadsMain() {
   const [activeTab, setActiveTab] = useState("all");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalContent, setModalContent] = useState(null);
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case "all":
-        return <AllLeads />;
-      case "filters":
-        return <Filters />;
-      case "analytics":
-        return <Analytics />;
-      case "add":
-        return <AddLead />;
-      default:
-        return <AllLeads />;
+  const handleTabPress = (tabId) => {
+    if (tabId === "all") {
+      // Show All Leads directly (not in modal)
+      setActiveTab(tabId);
+      setModalVisible(false);
+    } else {
+      // Show other tabs in modal
+      setActiveTab(tabId);
+      setModalContent(getModalContent(tabId));
+      setModalVisible(true);
     }
+  };
+
+  const getModalContent = (tabId) => {
+    switch (tabId) {
+      case "filters":
+        return <Filters onClose={closeModal} />;
+      case "analytics":
+        return <Analytics onClose={closeModal} />;
+      case "add":
+        return <AddLead onClose={closeModal} />;
+      default:
+        return null;
+    }
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setActiveTab("all"); // Reset to All Leads when modal closes
   };
 
   const tabs = [
@@ -36,8 +62,34 @@ export default function LeadsMain() {
 
   return (
     <View style={styles.container}>
-      {/* Main Content */}
-      <View style={styles.content}>{renderTabContent()}</View>
+      {/* Main Content - Always show All Leads */}
+      <View style={styles.content}>
+        <AllLeads />
+      </View>
+
+      {/* Modal for other tabs */}
+      <Modal
+        animationType="slide"
+        transparent={false}
+        visible={modalVisible}
+        onRequestClose={closeModal}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          {/* Modal Header */}
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+              <Ionicons name="close" size={24} color={colors.primaryText} />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>
+              {tabs.find((tab) => tab.id === activeTab)?.label || ""}
+            </Text>
+            <View style={styles.placeholder} />
+          </View>
+
+          {/* Modal Content */}
+          <View style={styles.modalContent}>{modalContent}</View>
+        </SafeAreaView>
+      </Modal>
 
       {/* Bottom Tab Navigation */}
       <View style={styles.bottomTabs}>
@@ -48,7 +100,7 @@ export default function LeadsMain() {
               styles.tabButton,
               activeTab === tab.id && styles.activeTabButton,
             ]}
-            onPress={() => setActiveTab(tab.id)}
+            onPress={() => handleTabPress(tab.id)}
           >
             <Ionicons
               name={tab.icon}
@@ -106,5 +158,34 @@ const styles = StyleSheet.create({
   activeTabLabel: {
     color: colors.primary,
     fontWeight: "600",
+  },
+  // Modal Styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: colors.cardBackground,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  closeButton: {
+    padding: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: colors.primaryText,
+  },
+  placeholder: {
+    width: 34, // Same width as close button for centering
+  },
+  modalContent: {
+    flex: 1,
   },
 });

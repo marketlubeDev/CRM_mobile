@@ -9,7 +9,15 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as DocumentPicker from "expo-document-picker";
 import { colors } from "../../constants/colors";
+import Selector from "../../components/Common/Selector";
+import {
+  leadSources,
+  countries,
+  branches,
+  districts,
+} from "../../constants/dropdownData";
 
 export default function AddLead() {
   const [formData, setFormData] = useState({
@@ -23,18 +31,10 @@ export default function AddLead() {
     notes: "",
   });
 
-  const [showSourceDropdown, setShowSourceDropdown] = useState(false);
-  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
 
-  const leadSources = [
-    "WhatsApp",
-    "Meta",
-    "Website",
-    "Referral",
-    "Cold Call",
-    "Email Campaign",
-  ];
-  const countries = ["India", "UAE", "Canada", "Australia", "USA", "UK"];
+  // State to manage which dropdown is currently open
+  const [openDropdown, setOpenDropdown] = useState(null);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -43,14 +43,40 @@ export default function AddLead() {
     }));
   };
 
-  const handleSourceSelect = (source) => {
-    handleInputChange("leadSource", source);
-    setShowSourceDropdown(false);
+  // Function to handle dropdown open/close
+  const handleDropdownOpen = (dropdownName, isOpen) => {
+    if (isOpen) {
+      setOpenDropdown(dropdownName);
+    } else {
+      setOpenDropdown(null);
+    }
   };
 
-  const handleCountrySelect = (country) => {
-    handleInputChange("country", country);
-    setShowCountryDropdown(false);
+  // Function to get dynamic z-index based on which dropdown is open
+  const getZIndex = (dropdownName) => {
+    if (openDropdown === dropdownName) {
+      return 10000; // Active dropdown gets highest z-index
+    }
+    return 1000; // All other dropdowns get lower z-index
+  };
+
+  const pickDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "*/*",
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setSelectedFile(result.assets[0]);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to pick document");
+    }
+  };
+
+  const removeFile = () => {
+    setSelectedFile(null);
   };
 
   const validateForm = () => {
@@ -83,6 +109,7 @@ export default function AddLead() {
               branch: "",
               notes: "",
             });
+            setSelectedFile(null);
           },
         },
       ]);
@@ -133,99 +160,64 @@ export default function AddLead() {
           />
         </View>
 
-        {/* Lead Source Dropdown */}
+        {/* Lead Source Selector */}
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Lead Source</Text>
-          <TouchableOpacity
-            style={styles.dropdown}
-            onPress={() => setShowSourceDropdown(!showSourceDropdown)}
-          >
-            <Text
-              style={[
-                styles.dropdownText,
-                formData.leadSource && styles.dropdownTextSelected,
-              ]}
-            >
-              {formData.leadSource || "Select source"}
-            </Text>
-            <Ionicons
-              name={showSourceDropdown ? "chevron-up" : "chevron-down"}
-              size={20}
-              color={colors.iconLight}
-            />
-          </TouchableOpacity>
-          {showSourceDropdown && (
-            <View style={styles.dropdownList}>
-              {leadSources.map((source) => (
-                <TouchableOpacity
-                  key={source}
-                  style={styles.dropdownItem}
-                  onPress={() => handleSourceSelect(source)}
-                >
-                  <Text style={styles.dropdownItemText}>{source}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
-
-        {/* Country Dropdown */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Country</Text>
-          <TouchableOpacity
-            style={styles.dropdown}
-            onPress={() => setShowCountryDropdown(!showCountryDropdown)}
-          >
-            <Text
-              style={[
-                styles.dropdownText,
-                formData.country && styles.dropdownTextSelected,
-              ]}
-            >
-              {formData.country || "Select country"}
-            </Text>
-            <Ionicons
-              name={showCountryDropdown ? "chevron-up" : "chevron-down"}
-              size={20}
-              color={colors.iconLight}
-            />
-          </TouchableOpacity>
-          {showCountryDropdown && (
-            <View style={styles.dropdownList}>
-              {countries.map((country) => (
-                <TouchableOpacity
-                  key={country}
-                  style={styles.dropdownItem}
-                  onPress={() => handleCountrySelect(country)}
-                >
-                  <Text style={styles.dropdownItemText}>{country}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
-
-        {/* District Input */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>District/City</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter district or city"
-            placeholderTextColor={colors.placeholderText}
-            value={formData.district}
-            onChangeText={(value) => handleInputChange("district", value)}
+          <Selector
+            label="Lead Source"
+            options={leadSources}
+            selectedValue={formData.leadSource}
+            onValueChange={(value) => handleInputChange("leadSource", value)}
+            placeholder="Select source"
+            open={openDropdown === "leadSource"}
+            onOpen={(isOpen) => handleDropdownOpen("leadSource", isOpen)}
+            zIndex={getZIndex("leadSource")}
+            zIndexInverse={1000}
           />
         </View>
 
-        {/* Branch Input */}
+        {/* Country Selector */}
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Branch</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter branch"
-            placeholderTextColor={colors.placeholderText}
-            value={formData.branch}
-            onChangeText={(value) => handleInputChange("branch", value)}
+          <Selector
+            label="Country"
+            options={countries}
+            selectedValue={formData.country}
+            onValueChange={(value) => handleInputChange("country", value)}
+            placeholder="Select country"
+            open={openDropdown === "country"}
+            onOpen={(isOpen) => handleDropdownOpen("country", isOpen)}
+            zIndex={getZIndex("country")}
+            zIndexInverse={1000}
+          />
+        </View>
+
+        {/* District Selector */}
+        <View style={styles.inputGroup}>
+          <Selector
+            label="District/City"
+            options={districts}
+            selectedValue={formData.district}
+            onValueChange={(value) => handleInputChange("district", value)}
+            placeholder="Select district or city"
+            searchable={true}
+            open={openDropdown === "district"}
+            onOpen={(isOpen) => handleDropdownOpen("district", isOpen)}
+            zIndex={getZIndex("district")}
+            zIndexInverse={1000}
+          />
+        </View>
+
+        {/* Branch Selector */}
+        <View style={styles.inputGroup}>
+          <Selector
+            label="Branch"
+            options={branches}
+            selectedValue={formData.branch}
+            onValueChange={(value) => handleInputChange("branch", value)}
+            placeholder="Select branch"
+            open={openDropdown === "branch"}
+            onOpen={(isOpen) => handleDropdownOpen("branch", isOpen)}
+            zIndex={getZIndex("branch")}
+            zIndexInverse={1000}
           />
         </View>
 
@@ -242,6 +234,85 @@ export default function AddLead() {
             value={formData.notes}
             onChangeText={(value) => handleInputChange("notes", value)}
           />
+        </View>
+
+        {/* File Upload Section */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Attach File (Optional)</Text>
+
+          {!selectedFile ? (
+            <TouchableOpacity
+              style={styles.fileUploadArea}
+              onPress={pickDocument}
+              activeOpacity={0.7}
+            >
+              <View style={styles.uploadIconContainer}>
+                <Ionicons
+                  name="cloud-upload-outline"
+                  size={32}
+                  color={colors.primary}
+                />
+              </View>
+              <Text style={styles.uploadTitle}>Tap to upload a file</Text>
+              <Text style={styles.uploadSubtitle}>
+                PDF, DOC, DOCX, JPG, PNG (Max 10MB)
+              </Text>
+              <View style={styles.browseButton}>
+                <Ionicons
+                  name="folder-outline"
+                  size={16}
+                  color={colors.primary}
+                />
+                <Text style={styles.browseButtonText}>Browse Files</Text>
+              </View>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.fileSelectedContainer}>
+              <View style={styles.filePreview}>
+                <View style={styles.fileIconContainer}>
+                  <Ionicons
+                    name="document-text"
+                    size={24}
+                    color={colors.primary}
+                  />
+                </View>
+                <View style={styles.fileDetails}>
+                  <Text style={styles.fileName} numberOfLines={1}>
+                    {selectedFile.name}
+                  </Text>
+                  <Text style={styles.fileSize}>
+                    {selectedFile.size
+                      ? `${(selectedFile.size / 1024).toFixed(1)} KB`
+                      : "Size unknown"}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={removeFile}
+                  style={styles.removeButton}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name="trash-outline"
+                    size={18}
+                    color={colors.error}
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={styles.changeFileButton}
+                onPress={pickDocument}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name="refresh-outline"
+                  size={16}
+                  color={colors.primary}
+                />
+                <Text style={styles.changeFileText}>Change File</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* Submit Button */}
@@ -293,42 +364,6 @@ const styles = StyleSheet.create({
     height: 100,
     paddingTop: 12,
   },
-  dropdown: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: colors.backgroundLight,
-  },
-  dropdownText: {
-    fontSize: 16,
-    color: colors.placeholderText,
-  },
-  dropdownTextSelected: {
-    color: colors.primaryText,
-  },
-  dropdownList: {
-    backgroundColor: colors.backgroundLight,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    marginTop: 4,
-    maxHeight: 200,
-  },
-  dropdownItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  dropdownItemText: {
-    fontSize: 16,
-    color: colors.primaryText,
-  },
   submitButton: {
     backgroundColor: colors.primary,
     borderRadius: 8,
@@ -340,5 +375,114 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: colors.whiteText,
+  },
+  // File Upload Styles - Modern Design
+  fileUploadArea: {
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderRadius: 12,
+    borderStyle: "dashed",
+    padding: 24,
+    backgroundColor: colors.backgroundLight,
+    alignItems: "center",
+    minHeight: 140,
+    justifyContent: "center",
+  },
+  uploadIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: colors.navActive,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  uploadTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: colors.primaryText,
+    marginBottom: 4,
+  },
+  uploadSubtitle: {
+    fontSize: 12,
+    color: colors.secondaryText,
+    textAlign: "center",
+    marginBottom: 16,
+    lineHeight: 16,
+  },
+  browseButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.backgroundLight,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  browseButtonText: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: "500",
+    marginLeft: 6,
+  },
+  fileSelectedContainer: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    backgroundColor: colors.backgroundLight,
+    overflow: "hidden",
+  },
+  filePreview: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    backgroundColor: colors.backgroundLight,
+  },
+  fileIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    backgroundColor: colors.navActive,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  fileDetails: {
+    flex: 1,
+    marginRight: 12,
+  },
+  fileName: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.primaryText,
+    marginBottom: 2,
+  },
+  fileSize: {
+    fontSize: 12,
+    color: colors.secondaryText,
+  },
+  removeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.lightOverlay,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  changeFileButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+    backgroundColor: colors.background,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  changeFileText: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: "500",
+    marginLeft: 6,
   },
 });
